@@ -32,6 +32,37 @@ class TCPSender {
     //! the (absolute) sequence number for the next byte to be sent
     uint64_t _next_seqno{0};
 
+    //! segments in-flight
+    std::queue<TCPSegment> _segments_in_flight{};
+
+    //! total time since start.
+    size_t _ms_since_start = 0;
+
+    //! current retransmission timeout
+    unsigned int _retransmission_timeout;
+
+    //! retransmission_timer
+    struct retransmission_timer {
+      unsigned int rto;
+      size_t start_time;
+    };
+
+    // nullopt means timer doesn't start
+    std::optional<retransmission_timer>_timer;
+
+    // ack abs index
+    uint64_t _ack_seqno = 0;
+    uint16_t _win_size = 1;
+
+    unsigned int _consecutive_retransmissions = 0;
+
+    size_t _bytes_in_flight = 0;
+
+    // indicate FIN has been sent
+    bool _fin_sended = false;
+
+    // indicate windows size
+    bool _zero_win = false;
   public:
     //! Initialize a TCPSender
     TCPSender(const size_t capacity = TCPConfig::DEFAULT_CAPACITY,
@@ -68,7 +99,7 @@ class TCPSender {
     //! (see TCPSegment::length_in_sequence_space())
     size_t bytes_in_flight() const;
 
-    //! \brief Number of consecutive retransmissions that have occurred in a row
+    //! \brief Number of consecutiveconsecutive_retransmissions retransmissions that have occurred in a row
     unsigned int consecutive_retransmissions() const;
 
     //! \brief TCPSegments that the TCPSender has enqueued for transmission.
