@@ -25,11 +25,16 @@ void TCPReceiver::segment_received(const TCPSegment &seg) {
     uint64_t abs_seqno;
     bool eof;
 
-    // abs_seqno >= 1
+    // abs_seqno >= 0
     abs_seqno = unwrap(seg.header().seqno, _isn.value(), _checkpoint);
 
     // the segment has been received
     if (abs_seqno + static_cast<uint64_t>(seg.length_in_sequence_space()) <= _checkpoint) {
+        return;
+    }
+
+    // out of window
+    if(abs_seqno >= _checkpoint+window_size()) {
         return;
     }
 
@@ -53,8 +58,8 @@ void TCPReceiver::segment_received(const TCPSegment &seg) {
     // get the number of reassembled bytes.
     size_t written = _reassembler.stream_out().bytes_written();
 
-    // _checkpoint is the abs index that has been received
-    _checkpoint = 0 + static_cast<uint64_t>(written);
+    // _checkpoint is just above the abs index that has been received
+    _checkpoint = 0+static_cast<uint64_t>(written)+1;
 
     // once FIN get accepted then the ackno should add one bit
     // because need to reply on ack segment
@@ -63,7 +68,7 @@ void TCPReceiver::segment_received(const TCPSegment &seg) {
         _checkpoint += 1;
     }
 
-    _ackno = wrap(_checkpoint + 1, _isn.value());
+    _ackno = wrap(_checkpoint, _isn.value());
 
     return;
 }

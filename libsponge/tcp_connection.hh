@@ -21,6 +21,17 @@ class TCPConnection {
     //! in case the remote TCPConnection doesn't know we've received its whole stream?
     bool _linger_after_streams_finish{true};
 
+    size_t _ms_since_start = 0;
+    size_t _ms_last_segment_received = 0;
+    std::optional<size_t> _both_streams_ended = std::nullopt;
+
+    bool _active = true;
+
+    // segments from _sender._segments_out --> _segments_out
+    void push_outgoing_segments();
+
+    // send rst
+    void send_rst();
   public:
     //! \name "Input" interface for the writer
     //!@{

@@ -135,7 +135,6 @@ void TCPSpongeSocket<AdaptT>::_initialize_TCP(const TCPConfig &config) {
             if (inbound.eof() or inbound.error()) {
                 _thread_data.shutdown(SHUT_WR);
                 _inbound_shutdown = true;
-
                 // debugging output:
                 cerr << "DEBUG: Inbound stream from " << _datagram_adapter.config().destination.to_string()
                      << " finished " << (inbound.error() ? "with an error/reset.\n" : "cleanly.\n");

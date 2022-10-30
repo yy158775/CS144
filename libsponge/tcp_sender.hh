@@ -51,6 +51,7 @@ class TCPSender {
     std::optional<retransmission_timer>_timer;
 
     // ack abs index
+    // from peer 
     uint64_t _ack_seqno = 0;
     uint16_t _win_size = 1;
 

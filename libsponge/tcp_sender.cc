@@ -151,7 +151,6 @@ void TCPSender::tick(const size_t ms_since_last_tick) {
     _ms_since_start += ms_since_last_tick;
 
     size_t expire_time = (*_timer).start_time + (*_timer).rto;
-    
 
     // retransmit
     // update _consecutive_retransmissions
@@ -186,5 +185,8 @@ unsigned int TCPSender::consecutive_retransmissions() const {
 }
 
 void TCPSender::send_empty_segment() {
-
+    TCPSegment seg;
+    seg.header().seqno = wrap(_next_seqno,_isn);
+    _segments_out.push(seg);
+    return;
 }
