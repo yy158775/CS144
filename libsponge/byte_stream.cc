@@ -21,7 +21,8 @@ size_t ByteStream::write(const string &data) {
     DUMMY_CODE(data);
     size_t lens;
     lens = min(remaining_capacity(),data.size());
-    _data = _data + data.substr(0,lens);
+    // _data = _data + data.substr(0,lens);
+    _data.append(data,0,lens);
     _bytes_written += lens;
 
     return lens;
@@ -38,7 +39,8 @@ void ByteStream::pop_output(const size_t len) {
     DUMMY_CODE(len);
     size_t rlen;
     rlen = min(buffer_size(),len);
-    _data = _data.substr(rlen);
+    // _data = _data.substr(rlen);
+    _data.erase(0,rlen);
     _bytes_read += rlen;
 }
 

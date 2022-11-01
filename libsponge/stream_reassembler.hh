@@ -6,6 +6,7 @@
 #include <cstdint>
 #include <string>
 #include <list>
+#include <memory>
 
 //! \brief A class that assembles a series of excerpts from a byte stream (possibly out of order,
 //! possibly overlapping) into an in-order byte stream.
@@ -26,7 +27,7 @@ class StreamReassembler {
       _data(data),_index(index),_eof(eof){}
     };
 
-    std::list<datagram>_datagrams;
+    std::list<std::shared_ptr<datagram> >_datagrams;
   public:
     //! \brief Construct a `StreamReassembler` that will store up to `capacity` bytes.
     //! \note This capacity limits both the bytes that have been reassembled,

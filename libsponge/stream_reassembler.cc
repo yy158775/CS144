@@ -9,6 +9,7 @@
 
 template <typename... Targs>
 void DUMMY_CODE(Targs &&.../* unused */) {}
+#include <memory>
 
 using namespace std;
 
@@ -23,10 +24,10 @@ void StreamReassembler::push_substring(const string &data, const size_t index, c
     uint64_t left, right;  // [left,right)
     left = _next_index;
 
-    list<datagram>::iterator it = _datagrams.begin();
+    list<shared_ptr<datagram> >::iterator it = _datagrams.begin();
 
     while (it != _datagrams.end()) {
-        right = it->_index;  // [left,right)
+        right = (*it)->_index;  // [left,right)
         uint64_t data_left, data_right;
         data_left = max(left, index);
         data_right = min(right, index + data.size());  // [)
@@ -38,13 +39,15 @@ void StreamReassembler::push_substring(const string &data, const size_t index, c
             } else {
                 datagram_eof = false;
             }
-            datagram new_datagram(data.substr(data_left - index, data_right - data_left), data_left, datagram_eof);
+            // datagram new_datagram(data.substr(data_left - index, data_right - data_left), data_left, datagram_eof);
             // before
+            shared_ptr<datagram>new_datagram 
+                = make_shared<datagram>(data.substr(data_left - index, data_right - data_left), data_left, datagram_eof);
             _datagrams.insert(it, new_datagram);
-            _unassembled_bytes += new_datagram._data.size();
+            _unassembled_bytes += new_datagram->_data.size();
         }
 
-        left = it->_index + it->_data.size();
+        left = (*it)->_index + (*it)->_data.size();
 
         if (left >= index + data.size()) {
             break;
@@ -57,10 +60,13 @@ void StreamReassembler::push_substring(const string &data, const size_t index, c
     if (left <= index + data.size()) {
         uint64_t data_left;
         data_left = max(left, index);
+        
+        shared_ptr<datagram>new_datagram = make_shared<datagram>(data.substr(data_left - index), data_left,eof);
+
         // std::move
-        datagram new_datagram(data.substr(data_left - index), data_left, eof);  // EOF
+        // datagram new_datagram(data.substr(data_left - index), data_left, eof);  // EOF
         _datagrams.push_back(new_datagram);
-        _unassembled_bytes += new_datagram._data.size();
+        _unassembled_bytes += new_datagram->_data.size();
     }
 
     // Capacity limit
@@ -74,29 +80,29 @@ void StreamReassembler::push_substring(const string &data, const size_t index, c
     }
 
     while (remove_bytes > 0) {
-        if (_datagrams.back()._data.size() <= remove_bytes) {
-            remove_bytes -= _datagrams.back()._data.size();
-            _unassembled_bytes -= _datagrams.back()._data.size();
+        if (_datagrams.back()->_data.size() <= remove_bytes) {
+            remove_bytes -= _datagrams.back()->_data.size();
+            _unassembled_bytes -= _datagrams.back()->_data.size();
             _datagrams.pop_back();
         } else {
-            size_t pos = _datagrams.back()._data.size() - remove_bytes;
-            _datagrams.back()._data.erase(pos);
-            _datagrams.back()._eof = false;
+            size_t pos = _datagrams.back()->_data.size() - remove_bytes;
+            _datagrams.back()->_data.erase(pos);
+            _datagrams.back()->_eof = false;
             _unassembled_bytes -= remove_bytes;
             remove_bytes = 0;
         }
     }
 
     // Merge
-    list<datagram>::iterator prev, cur;
+    list<shared_ptr<datagram>>::iterator prev, cur;
     cur = _datagrams.begin();
     cur++;
     prev = _datagrams.begin();
 
     while (cur != _datagrams.end()) {
-        if (prev->_index + prev->_data.size() == cur->_index) {
-            prev->_data = prev->_data + cur->_data;
-            prev->_eof = cur->_eof;
+        if ((*prev)->_index + (*prev)->_data.size() == (*cur)->_index) {
+            (*prev)->_data = (*prev)->_data + (*cur)->_data;
+            (*prev)->_eof = (*cur)->_eof;
 
             _datagrams.erase(cur);
             prev++;
@@ -110,13 +116,13 @@ void StreamReassembler::push_substring(const string &data, const size_t index, c
 
     // Write to ByteStream
     it = _datagrams.begin();
-    if (it != _datagrams.end() && it->_index == _next_index) {
-        _output.write(it->_data);
-        _next_index += it->_data.size();
-        _unassembled_bytes -= it->_data.size();
+    if (it != _datagrams.end() && (*it)->_index == _next_index) {
+        _output.write((*it)->_data);
+        _next_index += (*it)->_data.size();
+        _unassembled_bytes -= (*it)->_data.size();
 
         // EOF
-        if (it->_eof) {
+        if ((*it)->_eof) {
             _output.end_input();
         }
 
