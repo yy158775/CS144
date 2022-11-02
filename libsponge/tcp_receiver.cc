@@ -54,6 +54,7 @@ void TCPReceiver::segment_received(const TCPSegment &seg) {
 
     // can't be sure the segment's payload has been put into reassembled.
     _reassembler.push_substring(seg.payload().copy(), data_index, eof);
+    // _reassembler.push_substring()
 
     // get the number of reassembled bytes.
     size_t written = _reassembler.stream_out().bytes_written();

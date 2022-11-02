@@ -23,6 +23,7 @@ void StreamReassembler::push_substring(const string &data, const size_t index, c
     DUMMY_CODE(data, index, eof);
     uint64_t left, right;  // [left,right)
     left = _next_index;
+    
 
     // list<shared_ptr<datagram> >::iterator it = _datagrams.begin();
     list<datagram>::iterator it = _datagrams.begin();
@@ -40,12 +41,12 @@ void StreamReassembler::push_substring(const string &data, const size_t index, c
             } else {
                 datagram_eof = false;
             }
-            datagram new_datagram(data.substr(data_left - index, data_right - data_left), data_left, datagram_eof);
+            datagram new_datagram(move(data.substr(data_left - index, data_right - data_left)), data_left, datagram_eof);
             // before
             // shared_ptr<datagram>new_datagram 
                 // = make_shared<datagram>(data.substr(data_left - index, data_right - data_left), data_left, datagram_eof);
-            _datagrams.insert(it, new_datagram);
             _unassembled_bytes += new_datagram._data.size();
+            _datagrams.insert(it, move(new_datagram));
         }
 
         left = it->_index + it->_data.size();
@@ -65,9 +66,9 @@ void StreamReassembler::push_substring(const string &data, const size_t index, c
         // shared_ptr<datagram>new_datagram = make_shared<datagram>(data.substr(data_left - index), data_left,eof);
 
         // std::move
-        datagram new_datagram(data.substr(data_left - index), data_left, eof);  // EOF
-        _datagrams.push_back(new_datagram);
+        datagram new_datagram(move(data.substr(data_left - index)), data_left, eof);  // EOF        
         _unassembled_bytes += new_datagram._data.size();
+        _datagrams.push_back(move(new_datagram));
     }
 
     // Capacity limit
@@ -133,10 +134,6 @@ void StreamReassembler::push_substring(const string &data, const size_t index, c
 
     return;
 }
-
-// void StreamReassembler::push_substring(const std::string &&data, const uint64_t index, const bool eof) {
-
-// }
 
 size_t StreamReassembler::unassembled_bytes() const { return _unassembled_bytes; }
 
