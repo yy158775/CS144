@@ -48,6 +48,17 @@ class Router {
     //! as specified by the route with the longest prefix_length that matches the
     //! datagram's destination address.
     void route_one_datagram(InternetDatagram &dgram);
+    
+    struct route_rule {
+        uint32_t _route_prefix = 0;
+        uint8_t _prefix_length = 0;
+        std::optional<Address> _next_hop = std::nullopt;
+        size_t _interface_num = 0;
+    };
+
+    //! Save the mapping
+    std::unordered_map<uint32_t,route_rule>_route_table{};
+
 
   public:
     //! Add an interface to the router
@@ -70,5 +81,4 @@ class Router {
     //! Route packets between the interfaces
     void route();
 };
-
 #endif  // SPONGE_LIBSPONGE_ROUTER_HH
